@@ -1,0 +1,11 @@
+name: basic_cleaning
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas
+  - numpy
+  - scikit-learn
+  - pip
+  - pip:
+      - wandb

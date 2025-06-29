@@ -1,5 +1,5 @@
 main:
-  components_repository: "https://github.com/udacity/Project-Build-an-ML-Pipeline-Starter.git#components"
+  components_repository: "https://github.com/ShawnKing7/Project-Build-an-ML-Pipeline-Starter.git#components"
   # All the intermediate files will be copied to this directory at the end of the run.
   # Set this to null if you are running in prod
   project_name: nyc_airbnb
@@ -7,6 +7,10 @@ main:
   steps: all
 etl:
   sample: "sample1.csv"
+  input_artifact: "sample1.csv:latest"  # Added this
+  output_artifact: "clean_sample"       # Added this
+  output_type: "clean_sample"           # Added this
+  output_description: "Data with outliers and null values removed"  # Added this
   min_price: 10  # dollars
   max_price: 350  # dollars
 data_check:
