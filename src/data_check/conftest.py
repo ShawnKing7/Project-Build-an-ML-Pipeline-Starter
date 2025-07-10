@@ -1,71 +1,37 @@
 import pytest
 import pandas as pd
-import wandb
-
 
 def pytest_addoption(parser):
-    parser.addoption("--csv", action="store")
-    parser.addoption("--ref", action="store")
-    parser.addoption("--kl_threshold", action="store")
-    parser.addoption("--min_price", action="store")
-    parser.addoption("--max_price", action="store")
+    parser.addoption("--csv", action="store", default="clean_sample.csv",
+                   help="Path to cleaned data CSV")
+    parser.addoption("--ref", action="store", default="sample1.csv",
+                   help="Path to reference data CSV")
+    parser.addoption("--kl-threshold", type=float, default=0.2,
+                   help="KL divergence threshold")
+    parser.addoption("--min-price", type=float, default=10,
+                   help="Minimum price threshold")
+    parser.addoption("--max-price", type=float, default=350,
+                   help="Maximum price threshold")
 
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def data(request):
-    run = wandb.init(job_type="data_tests", resume=True)
+    """Load test dataset from local CSV"""
+    return pd.read_csv(request.config.getoption("--csv"))
 
-    # Download input artifact. This will also note that this script is using this
-    # particular version of the artifact
-    data_path = run.use_artifact(request.config.option.csv).file()
-
-    if data_path is None:
-        pytest.fail("You must provide the --csv option on the command line")
-
-    df = pd.read_csv(data_path)
-
-    return df
-
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def ref_data(request):
-    run = wandb.init(job_type="data_tests", resume=True)
+    """Load reference dataset from local CSV"""
+    return pd.read_csv(request.config.getoption("--ref"))
 
-    # Download input artifact. This will also note that this script is using this
-    # particular version of the artifact
-    data_path = run.use_artifact(request.config.option.ref).file()
-
-    if data_path is None:
-        pytest.fail("You must provide the --ref option on the command line")
-
-    df = pd.read_csv(data_path)
-
-    return df
-
-
-@pytest.fixture(scope='session')
+# Keep these fixtures unchanged
+@pytest.fixture(scope="session")
 def kl_threshold(request):
-    kl_threshold = request.config.option.kl_threshold
+    return request.config.getoption("--kl-threshold")
 
-    if kl_threshold is None:
-        pytest.fail("You must provide a threshold for the KL test")
-
-    return float(kl_threshold)
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def min_price(request):
-    min_price = request.config.option.min_price
+    return request.config.getoption("--min-price")
 
-    if min_price is None:
-        pytest.fail("You must provide min_price")
-
-    return float(min_price)
-
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def max_price(request):
-    max_price = request.config.option.max_price
-
-    if max_price is None:
-        pytest.fail("You must provide max_price")
-
-    return float(max_price)
+    return request.config.getoption("--max-price")

@@ -1,0 +1,12 @@
+name: nyc_airbnb_dev
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      - numpy==1.23.5
+      - scikit-learn==1.3.0
+      - pandas
+      - mlflow
+      - wandb

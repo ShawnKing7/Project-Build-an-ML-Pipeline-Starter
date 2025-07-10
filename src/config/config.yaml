@@ -1,0 +1,26 @@
+main:
+  project_name: nyc_airbnb
+  experiment_name: dev
+  steps: all
+  components_repository: file:./components
+
+etl:
+  sample: 1000
+  min_price: 10
+  max_price: 350
+
+data_check:
+  kl_threshold: 0.05
+
+modeling:
+  test_size: 0.1
+  val_size: 0.1
+  random_seed: 42
+  stratify_by: neighbourhood_group
+  max_tfidf_features: 5
+  random_forest:
+    n_estimators: 100
+    max_depth: 15
+    min_samples_split: 2
+    min_samples_leaf: 1
+    max_features: 1.0

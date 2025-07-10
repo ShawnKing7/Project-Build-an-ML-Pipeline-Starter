@@ -1,99 +1,62 @@
-#!/usr/bin/env python
-"""
-Download from W&B the raw dataset and apply some basic data cleaning, exporting the result to a new artifact
-"""
-import argparse
-import logging
-import wandb
 import pandas as pd
+import numpy as np
+import scipy.stats
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
-logger = logging.getLogger()
-
-# DO NOT MODIFY
-def go(args):
-
-    run = wandb.init(job_type="basic_cleaning")
-    run.config.update(args)
-
-    # Download input artifact. This will also log that this script is using this
-    
-    run = wandb.init(project="nyc_airbnb", group="cleaning", save_code=True)
-    artifact_local_path = run.use_artifact(args.input_artifact).file()
-    df = pd.read_csv(artifact_local_path)
-    # Drop outliers
-    min_price = args.min_price
-    max_price = args.max_price
-    idx = df['price'].between(min_price, max_price)
-    df = df[idx].copy()
-    # Convert last_review to datetime
-    df['last_review'] = pd.to_datetime(df['last_review'])
-
-    idx = df['longitude'].between(-74.25, -73.50) & df['latitude'].between(40.5, 41.2)
-    df = df[idx].copy()
-    # Save the cleaned file
-    df.to_csv('clean_sample.csv',index=False)
-
-    # log the new data.
-    artifact = wandb.Artifact(
-     args.output_artifact,
-     type=args.output_type,
-     description=args.output_description,
- )
-    artifact.add_file("clean_sample.csv")
-    run.log_artifact(artifact)
+def test_column_names(data):
+    expected_colums = [
+        "id",
+        "name",
+        "host_id",
+        "host_name",
+        "neighbourhood_group",
+        "neighbourhood",
+        "latitude",
+        "longitude",
+        "room_type",
+        "price",
+        "minimum_nights",
+        "number_of_reviews",
+        "last_review",
+        "reviews_per_month",
+        "calculated_host_listings_count",
+        "availability_365",
+    ]
+    these_columns = data.columns.values
+    assert list(expected_colums) == list(these_columns)
 
 
-# TODO: In the code below, fill in the data type for each argumemt. The data type should be str, float or int. 
-# TODO: In the code below, fill in a description for each argument. The description should be a string.
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description="A very basic data cleaning")
-  
-    parser.add_argument(
-        "--input_artifact", 
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
-
-    parser.add_argument(
-        "--output_artifact", 
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
-
-    parser.add_argument(
-        "--output_type", 
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
-
-    parser.add_argument(
-        "--output_description", 
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
-
-    parser.add_argument(
-        "--min_price", 
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
-
-    parser.add_argument(
-        "--max_price",
-        type = ## INSERT TYPE HERE: str, float or int,
-        help = ## INSERT DESCRIPTION HERE,
-        required = True
-    )
+def test_neighborhood_names(data):
+    known_names = ["Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island"]
+    neigh = set(data['neighbourhood_group'].unique())
+    assert set(known_names) == set(neigh)
 
 
-    args = parser.parse_args()
+def test_proper_boundaries(data: pd.DataFrame):
+    """Test proper longitude and latitude boundaries for properties in and around NYC"""
+    idx = data['longitude'].between(-74.25, -73.50) & data['latitude'].between(40.5, 41.2)
+    assert np.sum(~idx) == 0
 
-    go(args)
+
+def test_similar_neigh_distrib(data: pd.DataFrame, ref_data: pd.DataFrame, kl_threshold: float):
+    """Apply KL divergence threshold to detect significant distribution changes"""
+    dist1 = data['neighbourhood_group'].value_counts().sort_index()
+    dist2 = ref_data['neighbourhood_group'].value_counts().sort_index()
+    assert scipy.stats.entropy(dist1, dist2, base=2) < kl_threshold
+
+
+def test_row_count(data: pd.DataFrame):
+    """Check dataset has reasonable number of rows"""
+    assert 1000 < data.shape[0] < 1000000, f"Row count {data.shape[0]} is outside expected range"
+
+
+def test_price_range(data: pd.DataFrame, min_price: float, max_price: float):
+    """Check all prices are within configured range"""
+    assert data['price'].between(min_price, max_price).all(), \
+        f"Prices outside {min_price}-{max_price} range"
+
+
+def test_null_values(data: pd.DataFrame):
+    """Check for null values in dataset"""
+    assert not data.isnull().any().any(), "Null values found in columns: " + \
+        str(data.columns[data.isnull().any()].tolist())
