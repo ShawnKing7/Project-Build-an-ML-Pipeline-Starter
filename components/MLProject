@@ -1,0 +1,15 @@
+name: get_data
+
+entry_points:
+  main:
+    parameters:
+      sample: {type: int}
+      artifact_name: {type: str}
+      artifact_type: {type: str}
+      artifact_description: {type: str}
+    command: >
+      python main.py
+        --sample ${sample}
+        --artifact_name ${artifact_name}
+        --artifact_type ${artifact_type}
+        --artifact_description ${artifact_description}

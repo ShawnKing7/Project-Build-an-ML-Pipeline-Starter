@@ -1,19 +1,90 @@
-name: nyc_airbnb
-conda_env: conda.yml
+name: nyc_airbnb_dev
+
+conda_env: src/train_random_forest/conda.yaml
 
 entry_points:
+
   main:
+    parameters: {}
+    command: >
+      mlflow run . -e basic_cleaning &&
+      mlflow run . -e data_check &&
+      mlflow run . -e data_split &&
+      mlflow run . -e train_random_forest
+
+  basic_cleaning:
     parameters:
+      input_artifact: {type: str}
+      output_artifact: {type: str}
+      output_type: {type: str}
+      output_description: {type: str}
+      min_price: {type: int}
+      max_price: {type: int}
+    command: >
+      python src/basic_cleaning/run.py
+      --input_artifact {input_artifact}
+      --output_artifact {output_artifact}
+      --output_type {output_type}
+      --output_description {output_description}
+      --min_price {min_price}
+      --max_price {max_price}
 
-      steps:
-        description: Comma-separated list of steps to execute (useful for debugging)
-        type: str
-        default: all
+  data_check:
+    parameters:
+      csv: {type: str}
+      ref: {type: str}
+      kl_threshold: {type: float}
+    command: >
+      python src/data_check/run.py
+      --csv {csv}
+      --ref {ref}
+      --kl_threshold {kl_threshold}
 
-      hydra_options:
-        description: Other configuration parameters to override
-        type: str
-        default: ''
+  data_split:
+    parameters:
+      input_artifact: {type: str}
+      test_size: {type: float}
+      val_size: {type: float}
+      random_seed: {type: int}
+      stratify_by: {type: str, default: "none"}
+    command: >
+      python src/data_split/run.py
+      --input_artifact {input_artifact}
+      --test_size {test_size}
+      --val_size {val_size}
+      --random_seed {random_seed}
+      --stratify_by {stratify_by}
 
-    command: "python main.py main.steps='{steps}' {hydra_options}"
+  train_random_forest:
+    parameters:
+      train_data: {type: str}
+      val_data: {type: str}
+      target: {type: str}
+      n_estimators: {type: int}
+      min_samples_split: {type: int}
+      min_samples_leaf: {type: int}
+      random_seed: {type: int}
+      output_artifact: {type: str}
+      max_depth: {type: str, default: "None"}
+      max_features: {type: str, default: "None"}
+    command: >
+      python src/train_random_forest/run.py
+      --train_data {train_data}
+      --val_data {val_data}
+      --target {target}
+      --n_estimators {n_estimators}
+      --min_samples_split {min_samples_split}
+      --min_samples_leaf {min_samples_leaf}
+      --random_seed {random_seed}
+      --output_artifact {output_artifact}
+      --max_depth {max_depth}
+      --max_features {max_features}
 
+  test_regression_model:
+    parameters:
+      mlflow_model: {type: str}
+      test_data: {type: str}
+    command: >
+      python src/test_regression_model/run.py
+      --mlflow_model {mlflow_model}
+      --test_data {test_data}

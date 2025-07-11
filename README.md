@@ -1,10 +1,56 @@
 # Build an ML Pipeline for Short-Term Rental Prices in NYC
-You are working for a property management company renting rooms and properties for short periods of 
+For this Udacity Project, I am working for a property management company renting rooms and properties for short periods of 
 time on various rental platforms. You need to estimate the typical price for a given property based 
 on the price of similar properties. Your company receives new data in bulk every week. The model needs 
 to be retrained with the same cadence, necessitating an end-to-end pipeline that can be reused.
 
+## Hyperlinks to the Project
+[https://wandb.ai/shawn-690-western-governors-university/nyc_airbnb?nw=nwusershawncmrs](https://wandb.ai/shawn-690-western-governors-university/nyc_airbnb?nw=nwusershawncmrs)
+
+[https://github.com/ShawnKing7/Project-Build-an-ML-Pipeline-Starter](https://github.com/ShawnKing7/Project-Build-an-ML-Pipeline-Starter)
+
 In this project you will build such a pipeline.
+
+## Pipeline Architecture
+
+## Pipeline Flow
+1. `get_data` > Raw Data (W&B)  
+2. `basic_cleaning` > Clean Data  
+3. `data_check` > Validated Data  
+4. `train_val_test_split` > Train/Test Sets  
+5. `train_random_forest` > Model (W&B Registry)  
+6. `test_regression_model` > Performance Metrics  
+
+Weekly retraining automated via MLflow  
+
+## Pipeline Architecture
+
+1. **Data Ingestion** (`get_data`)  
+   - Downloads raw data from rental platforms  
+   - Output: `sample.csv` (W&B artifact)  
+
+2. **Cleaning** (`basic_cleaning`)  
+   - Removes price outliers (configurable in `config.yaml`)  
+   - Fixes data types (e.g., date conversion)  
+   - Output: `clean_sample.csv`  
+
+3. **Validation** (`data_check`)  
+   - Runs pytest checks on data quality  
+   - Compares to reference dataset in W&B  
+
+4. **Segregation** (`train_val_test_split`)  
+   - Splits data into train/test sets  
+   - Configurable ratios via Hydra  
+
+5. **Model Training** (`train_random_forest`)  
+   - Trains Random Forest with TF-IDF features  
+   - Output: MLflow model artifact  
+
+6. **Testing** (`test_regression_model`)  
+   - Evaluates model on test set  
+   - Promotes best model to W&B registry  
+
+Automatically retrains weekly via MLflow
 
 ## Table of contents
 
@@ -86,6 +132,21 @@ the configuration file. It can be accessed from the ``go`` function as
 NOTE: do NOT hardcode any parameter when writing the pipeline. All the parameters should be 
 accessed from the configuration file.
 
+## Configuration
+
+All pipeline parameters are set in `config.yaml`:
+
+```yaml
+
+etl:
+  min_price: 10
+  max_price: 350
+
+modeling:
+  random_forest:
+    n_estimators: 100
+    max_features: 0.5
+
 ### Running the entire pipeline or just a selection of steps
 In order to run the pipeline when you are developing, you need to be in the root of the starter kit, 
 then you can execute as usual:
@@ -94,7 +155,15 @@ then you can execute as usual:
 >  mlflow run .
 ```
 This will run the entire pipeline.
+## Running the Pipeline
 
+### Basic Commands
+```bash
+# Full pipeline
+mlflow run .
+
+# Specific steps (example)
+mlflow run . -P steps=download,basic_cleaning
 When developing it is useful to be able to run one step at the time. Say you want to run only
 the ``download`` step. The `main.py` is written so that the steps are defined at the top of the file, in the 
 ``_steps`` list, and can be selected by using the `steps` parameter on the command line:
@@ -144,6 +213,15 @@ You can see the parameters that they require by looking into their `MLproject` f
 
 ## In case of errors
 
+## Troubleshooting
+
+### Common Fixes
+```bash
+# Clean up corrupted MLflow environments:
+for env in $(conda info --envs | grep mlflow | cut -f1 -d" "); do
+  conda remove --name $env --all -y
+done
+
 ### Environments
 When you make an error writing your `conda.yml` file, you might end up with an environment for the pipeline or one
 of the components that is corrupted. Most of the time `mlflow` realizes that and creates a new one every time you try
@@ -152,6 +230,7 @@ In that case, you might want to clean up all conda environments created by `mlfl
 you can get a list of the environments you are about to remove by executing:
 
 ```
+
 > conda info --envs | grep mlflow | cut -f1 -d" "
 ```
 
@@ -172,9 +251,18 @@ If you see the any error while running the command:
 ```
 > mlflow run .
 ```
+## Conclusion
+This pipeline is a solid foundation for predicting NYC rental prices. It is fully updateable to grow with the organization's needs.
+Updates to the relevant step would be completed in the 'src/' folder.
+
+Possible expansion ideas are:
+- Add new cleaning rules for when data formats are changed or updated
+- Change Random Forest for a different model.
+- Additional validation checks as edge cases are discovered.
+- Weekly runs may be scheduled for different orchestrators.
+- Ad-hoc runs utilizing customized parameters using Hydra syntax.
 
 Please, make sure all steps are using **the same** python version and that you have **conda installed**. Additionally, *mlflow* and *wandb* packages are crucial and should have the same version.
-
 
 ## License
 

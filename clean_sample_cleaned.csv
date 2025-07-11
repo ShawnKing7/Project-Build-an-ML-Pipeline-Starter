@@ -1,0 +1,4 @@
+name,neighbourhood_group,price,latitude,longitude,last_review
+Listing A,Brooklyn,150,40.7,-74.0,2025-01-01
+Listing B,Manhattan,200,40.8,-73.9,2025-02-15
+Listing C,Queens,80,40.6,-73.8,2025-03-10

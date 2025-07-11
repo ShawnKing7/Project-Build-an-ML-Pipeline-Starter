@@ -1,0 +1,3 @@
+id,name,neighbourhood_group,neighbourhood,latitude,longitude,room_type,price
+2,Sunny room,Brooklyn,Bushwick,40.694,-73.941,Shared room,45
+3,Luxury suite,Manhattan,Midtown,40.753,-73.983,Entire home/apt,300
